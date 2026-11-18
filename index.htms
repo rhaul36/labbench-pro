@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LabBench Pro - Bancada Definitiva SENAI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans select-none overflow-hidden h-screen flex flex-col">
+
+    <!-- Topo / Barra de Ferramentas -->
+    <header class="bg-slate-900 border-b border-slate-800 p-2 md:p-3 flex flex-wrap justify-between items-center gap-2 shadow-md z-10">
+        <div>
+            <h1 class="text-sm md:text-base font-bold text-amber-400">⚡ LabBench Pro - Bancada Oficial SENAI</h1>
+            <p class="text-[10px] text-slate-400">Toque nos componentes para adicionar, editar e ligar fios.</p>
+        </div>
+        
+        <div class="flex items-center gap-1.5">
+            <button id="btnModoFio" onclick="alternarModoFio()" class="bg-slate-800 hover:bg-slate-700 text-sky-400 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-sky-500/30">🔌 Fio: OFF</button>
+            <button onclick="ajustarZoom(0.1)" class="bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-700">🔍+</button>
+            <button onclick="ajustarZoom(-0.1)" class="bg-slate-800 hover:bg-slate-700 px-2 py-1.5 rounded-lg text-xs font-bold border border-slate-700">🔍-</button>
+            <button onclick="limparMesa()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-rose-500/30">🗑️</button>
+            <button onclick="executarSimulacaoAvancada()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 py-1.5 rounded-lg text-xs font-bold shadow-lg">🚀 Simular</button>
+        </div>
+    </header>
+
+    <!-- Corpo Principal -->
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        
+        <!-- Painel Lateral de Controle -->
+        <aside class="w-full lg:w-80 bg-slate-900 border-r border-slate-800 p-2.5 overflow-y-auto space-y-3 flex-shrink-0 z-20 max-h-[40vh] lg:max-h-full">
+            <h2 class="text-xs font-semibold text-emerald-400 uppercase tracking-wider border-b border-slate-800 pb-1">1. Catálogo (Toque para Inserir)</h2>
+            
+            <div class="grid grid-cols-4 lg:grid-cols-2 gap-1.5">
+                <button onclick="adicionarComponente('fonte')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 p-2 rounded-xl text-center lg:text-left text-xs transition">
+                    <span class="block text-amber-400 font-bold">🔋 Fonte</span>
+                </button>
+                <button onclick="adicionarComponente('resistor')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 p-2 rounded-xl text-center lg:text-left text-xs transition">
+                    <span class="block text-emerald-400 font-bold">⚡ Resistor</span>
+                </button>
+                <button onclick="adicionarComponente('capacitor')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 p-2 rounded-xl text-center lg:text-left text-xs transition">
+                    <span class="block text-sky-400 font-bold">🔋 Capacitor</span>
+                </button>
+                <button onclick="adicionarComponente('indutor')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 p-2 rounded-xl text-center lg:text-left text-xs transition">
+                    <span class="block text-purple-400 font-bold">🌀 Indutor</span>
+                </button>
+                <button onclick="adicionarComponente('diodo')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 p-2 rounded-xl text-center lg:text-left text-xs transition">
+                    <span class="block text-indigo-400 font-bold">🔀 Diodo</span>
+                </button>
+                <button onclick="adicionarComponente('led')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 p-2 rounded-xl text-center lg:text-left text-xs transition">
+                    <span class="block text-rose-400 font-bold">💡 LED</span>
+                </button>
+                <button onclick="adicionarComponente('zener')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 p-2 rounded-xl text-center lg:text-left text-xs transition">
+                    <span class="block text-yellow-400 font-bold">🛡️ Zener</span>
+                </button>
+                <button onclick="adicionarComponente('transistor')" class="bg-slate-950 hover:bg-slate-800 border border-slate-800 p-2 rounded-xl text-center lg:text-left text-xs transition">
+                    <span class="block text-teal-400 font-bold">⚙️ Transist.</span>
+                </button>
+            </div>
+
+            <!-- Parâmetros Manuais do Fio -->
+            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-2">
+                <h3 class="text-xs font-bold text-sky-400 border-b border-slate-800 pb-1">🔌 Parâmetros do Cabo</h3>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <div>
+                        <label class="block text-[9px] text-slate-400 mb-0.5">Resistividade (ρ)</label>
+                        <input type="number" id="fioRho" value="0.0172" step="0.001" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs text-white font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] text-slate-400 mb-0.5">Tamanho (m)</label>
+                        <input type="number" id="fioMetros" value="1.0" step="0.5" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs text-white font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] text-slate-400 mb-0.5">Bitola (mm²)</label>
+                        <input type="number" id="fioBitola" value="1.5" step="0.25" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs text-white font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Edição do Componente Selecionado -->
+            <div id="painelPropriedades" class="hidden bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-2">
+                <h3 class="text-xs font-bold text-amber-400 border-b border-slate-800 pb-1">⚙️ Editar Item</h3>
+                <input type="hidden" id="propId">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[9px] text-slate-400 mb-0.5">Referência</label>
+                        <input type="text" id="propNome" oninput="atualizarPropriedade()" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs text-white">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] text-slate-400 mb-0.5" id="lblValorProp">Valor</label>
+                        <input type="number" id="propValor" oninput="atualizarPropriedade()" step="0.1" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs text-white font-mono">
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <button onclick="rotacionarSelecionado()" class="flex-1 bg-slate-800 hover:bg-slate-700 py-1 rounded-lg text-xs font-bold">🔄 Girar 90°</button>
+                    <button onclick="removerSelecionado()" class="bg-rose-500/20 text-rose-400 py-1 px-3 rounded-lg text-xs font-bold">🗑️ Excluir</button>
+                </div>
+            </div>
+
+            <h2 class="text-xs font-semibold text-emerald-400 uppercase tracking-wider border-b border-slate-800 pb-1 pt-1">4. Resultados & Tutor</h2>
+            <div id="painelResultados" class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 font-mono text-[11px] space-y-1 text-slate-300">
+                <p class="text-slate-500 italic">Adicione blocos, ligue fios e simule...</p>
+            </div>
+        </aside>
+
+        <!-- Área de Trabalho Principal (Canvas) -->
+        <main class="flex-1 relative bg-slate-950 overflow-hidden flex items-center justify-center">
+            <div id="instrucaoCanvas" class="absolute top-2 left-2 bg-slate-900/90 backdrop-blur px-2.5 py-1 rounded-lg border border-slate-800 text-[10px] text-slate-400 pointer-events-none z-10 shadow">
+                Arraste o fundo para mover a mesa. Toque em blocos para editar. Ative "Fio: ON" para ligar pinos.
+            </div>
+            <canvas id="mesaCanvas" class="cursor-crosshair bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:24px_24px] w-full h-full"></canvas>
+        </main>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mesaCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function redimensionarCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            desenharMesa();
+        }
+        window.addEventListener('resize', redimensionarCanvas);
+        redimensionarCanvas();
+
+        let componentes = [];
+        let fios = []; 
+        let selecionado = null;
+        let arrastando = false;
+        let offsetX = 0, offsetY = 0;
+        
+        let escalaZoom = 1.0;
+        let panX = 0, panY = 0;
+        let arrastandoMesa = false;
+        let inicioPanX = 0, inicioPanY = 0;
+
+        let modoFio = false;
+        let pinoOrigem = null;
+
+        function carregarMesaInicial() {
+            componentes.push({ id: 1, tipo: 'fonte', nome: 'V1', valor: 12, unidade: 'V', x: 50, y: 50, rotacao: 0, w: 80, h: 50 });
+            componentes.push({ id: 2, tipo: 'resistor', nome: 'R1', valor: 100, unidade: 'Ω', x: 200, y: 50, rotacao: 0, w: 80, h: 40 });
+        }
+        carregarMesaInicial();
+
+        function alternarModoFio() {
+            modoFio = !modoFio;
+            let btn = document.getElementById('btnModoFio');
+            let txtInstrucao = document.getElementById('instrucaoCanvas');
+            if(modoFio) {
+                btn.className = "bg-sky-500 text-slate-950 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-sky-400 shadow-lg";
+                btn.innerText = "🔌 Fio: ON";
+                txtInstrucao.innerText = "Modo Fio ATIVO: Toque no pino amarelo (esquerdo/direito) de um bloco e depois no pino de outro.";
+                selecionado = null;
+                document.getElementById('painelPropriedades').classList.add('hidden');
+            } else {
+                btn.className = "bg-slate-800 hover:bg-slate-700 text-sky-400 px-2.5 py-1.5 rounded-lg text-xs font-bold border border-sky-500/30";
+                btn.innerText = "🔌 Fio: OFF";
+                txtInstrucao.innerText = "Arraste o fundo para mover a mesa. Toque em blocos para editar valores.";
+                pinoOrigem = null;
+            }
+            desenharMesa();
+        }
+
+        function adicionarComponente(tipo) {
+            let novoId = Date.now();
+            let qtdTipo = componentes.filter(c => c.tipo === tipo).length + 1;
+            let prefixo = tipo === 'fonte' ? 'V' : (tipo === 'resistor' ? 'R' : (tipo === 'capacitor' ? 'C' : (tipo === 'indutor' ? 'L' : (tipo === 'diodo' ? 'D' : (tipo === 'led' ? 'LED' : (tipo === 'zener' ? 'ZD' : 'Q'))))));
+            let nomeDef = prefixo + qtdTipo;
+            let valDef = tipo === 'fonte' ? 12 : (tipo === 'resistor' ? 220 : (tipo === 'capacitor' ? 100 : (tipo === 'indutor' ? 10 : (tipo === 'diodo' ? 0.7 : (tipo === 'led' ? 2.0 : (tipo === 'zener' ? 5.1 : 100))))));
+            let unidadeDef = tipo === 'fonte' ? 'V' : (tipo === 'resistor' ? 'Ω' : (tipo === 'capacitor' ? 'µF' : (tipo === 'indutor' ? 'mH' : (tipo === 'diodo' ? 'V' : (tipo === 'led' ? 'V' : (tipo === 'zener' ? 'V' : 'hFE'))))));
+            
+            let novoComp = {
+                id: novoId, tipo: tipo, nome: nomeDef, valor: valDef, unidade: unidadeDef,
+                x: (-panX + canvas.width / 2) / escalaZoom - 40 + (Math.random() * 30),
+                y: (-panY + canvas.height / 2) / escalaZoom - 25 + (Math.random() * 30),
+                rotacao: 0, w: 80, h: 45
+            };
+            componentes.push(novoComp);
+            selecionarComponente(novoComp);
+            desenharMesa();
+        }
+
+        function obterCoordenadasPinos(comp) {
+            let cx = comp.x + comp.w / 2;
+            let cy = comp.y + comp.h / 2;
+            let rad = (comp.rotacao * Math.PI) / 180;
+
+            let p1x = -comp.w / 2, p1y = 0;
+            let p2x = comp.w / 2, p2y = 0;
+
+            let esqX = cx + (p1x * Math.cos(rad) - p1y * Math.sin(rad));
+            let esqY = cy + (p1x * Math.sin(rad) + p1y * Math.cos(rad));
+            let dirX = cx + (p2x * Math.cos(rad) - p2y * Math.sin(rad));
+            let dirY = cy + (p2x * Math.sin(rad) + p2y * Math.cos(rad));
+
+            return { esq: {x: esqX, y: esqY}, dir: {x: dirX, y: dirY} };
+        }
+
+        function desenharMesa() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(panX, panY);
+            ctx.scale(escalaZoom, escalaZoom);
+
+            // 1. Desenhar Fios
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 3;
+            fios.forEach(fio => {
+                let c1 = componentes.find(c => c.id === fio.de.compId);
+                let c2 = componentes.find(c => c.id === fio.para.compId);
+                if(c1 && c2) {
+                    let pinos1 = obterCoordenadasPinos(c1);
+                    let pinos2 = obterCoordenadasPinos(c2);
+                    let p1 = pinos1[fio.de.pino];
+                    let p2 = pinos2[fio.para.pino];
+
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    let cx1 = (p1.x + p2.x) / 2;
+                    let cy1 = p1.y;
+                    let cx2 = (p1.x + p2.x) / 2;
+                    let cy2 = p2.y;
+                    ctx.bezierCurveTo(cx1, cy1, cx2, cy2, p2.x, p2.y);
+                    ctx.stroke();
+                }
+            });
+
+            // 2. Desenhar Componentes
+            componentes.forEach(comp => {
+                ctx.save();
+                ctx.translate(comp.x + comp.w / 2, comp.y + comp.h / 2);
+                ctx.rotate((comp.rotacao * Math.PI) / 180);
+
+                ctx.fillStyle = selecionado === comp ? '#1e293b' : '#0f172a';
+                ctx.strokeStyle = selecionado === comp ? '#fbbf24' : '#334155';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(-comp.w / 2, -comp.h / 2, comp.w, comp.h, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = 'bold 11px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(comp.nome, 0, -5);
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '10px monospace';
+                ctx.fillText(`${comp.valor} ${comp.unidade}`, 0, 12);
+                ctx.restore();
+
+                let pinos = obterCoordenadasPinos(comp);
+                [pinos.esq, pinos.dir].forEach(p => {
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#0f172a';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                });
+            });
+
+            ctx.restore();
+        }
+
+        function obterPosicaoMundo(e) {
+            let rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return {
+                x: (clientX - rect.left - panX) / escalaZoom,
+                y: (clientY - rect.top - panY) / escalaZoom
+            };
+        }
+
+        canvas.addEventListener('mousedown', iniciarToque);
+        canvas.addEventListener('touchstart', iniciarToque, {passive: true});
+
+        function iniciarToque(e) {
+            let pos = obterPosicaoMundo(e);
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            if(modoFio) {
+                for(let c of componentes) {
+                    let pinos = obterCoordenadasPinos(c);
+                    if(Math.hypot(pos.x - pinos.esq.x, pos.y - pinos.esq.y) < 16) {
+                        tratarCliquePino(c.id, 'esq');
+                        return;
+                    }
+                    if(Math.hypot(pos.x - pinos.dir.x, pos.y - pinos.dir.y) < 16) {
+                        tratarCliquePino(c.id, 'dir');
+                        return;
+                    }
+                }
+                return;
+            }
+
+            selecionado = null;
+            for (let i = componentes.length - 1; i >= 0; i--) {
+                let c = componentes[i];
+                if (pos.x >= c.x && pos.x <= c.x + c.w && pos.y >= c.y && pos.y <= c.y + c.h) {
+                    selecionado = c;
+                    arrastando = true;
+                    offsetX = pos.x - c.x;
+                    offsetY = pos.y - c.y;
+                    componentes.splice(i, 1);
+                    componentes.push(selecionado);
+                    selecionarComponente(selecionado);
+                    desenharMesa();
+                    return;
+                }
+            }
+
+            if (!selecionado) {
+                document.getElementById('painelPropriedades').classList.add('hidden');
+                arrastandoMesa = true;
+                inicioPanX = clientX - panX;
+                inicioPanY = clientY - panY;
+            }
+        }
+
+        function tratarCliquePino(compId, pino) {
+            if(!pinoOrigem) {
+                pinoOrigem = {compId, pino};
+                alert("Pino origem selecionado! Agora toque no pino de outro componente para fechar o cabo.");
+            } else {
+                if(pinoOrigem.compId !== compId) {
+                    let m = parseFloat(document.getElementById('fioMetros').value) || 1.0;
+                    let b = parseFloat(document.getElementById('fioBitola').value) || 1.5;
+                    let r = parseFloat(document.getElementById('fioRho').value) || 0.0172;
+
+                    fios.push({ de: pinoOrigem, para: {compId, pino}, metros: m, bitola: b, rho: r });
+                    pinoOrigem = null;
+                    desenharMesa();
+                } else {
+                    pinoOrigem = null;
+                }
+            }
+        }
+
+        canvas.addEventListener('mousemove', moverToque);
+        canvas.addEventListener('touchmove', moverToque, {passive: true});
+
+        function moverToque(e) {
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            if (arrastando && selecionado && !modoFio) {
+                let pos = obterPosicaoMundo(e);
+                selecionado.x = pos.x - offsetX;
+                selecionado.y = pos.y - offsetY;
+                desenharMesa();
+            } else if (arrastandoMesa) {
+                panX = clientX - inicioPanX;
+                panY = clientY - inicioPanY;
+                desenharMesa();
+            }
+        }
+
+        canvas.addEventListener('mouseup', () => { arrastando = false; arrastandoMesa = false; });
+        canvas.addEventListener('touchend', () => { arrastando = false; arrastandoMesa = false; });
+
+        function selecionarComponente(comp) {
+            document.getElementById('painelPropriedades').classList.remove('hidden');
+            document.getElementById('propId').value = comp.id;
+            document.getElementById('propNome').value = comp.nome;
+            document.getElementById('propValor').value = comp.valor;
+            document.getElementById('lblValorProp').innerText = `Valor (${comp.unidade})`;
+        }
+
+        function atualizarPropriedade() {
+            if (!selecionado) return;
+            selecionado.nome = document.getElementById('propNome').value;
+            selecionado.valor = parseFloat(document.getElementById('propValor').value) || 0;
+            desenharMesa();
+        }
+
+        function rotacionarSelecionado() {
+            if (!selecionado) return;
+            selecionado.rotacao = (selecionado.rotacao + 90) % 360;
+            desenharMesa();
+        }
+
+        function removerSelecionado() {
+            if (!selecionado) return;
+            componentes = componentes.filter(c => c !== selecionado);
+            fios = fios.filter(f => f.de.compId !== selecionado.id && f.para.compId !== selecionado.id);
+            selecionado = null;
+            document.getElementById('painelPropriedades').classList.add('hidden');
+            desenharMesa();
+        }
+
+        function limparMesa() {
+            componentes = [];
+            fios = [];
+            selecionado = null;
+            document.getElementById('painelPropriedades').classList.add('hidden');
+            panX = 0; panY = 0; escalaZoom = 1.0;
+            desenharMesa();
+        }
+
+        function ajustarZoom(delta) {
+            escalaZoom = Math.max(0.4, Math.min(2.5, escalaZoom + delta));
+            desenharMesa();
+        }
+
+        // Simulação Técnica Completa (SENAI / Malvino)
+        function executarSimulacaoAvancada() {
+            let fontes = componentes.filter(c => c.tipo === 'fonte');
+            let resistores = componentes.filter(c => c.tipo === 'resistor');
+            let diodos = componentes.filter(c => c.tipo === 'diodo' || c.tipo === 'led' || c.tipo === 'zener');
+
+            if (fontes.length === 0 || (resistores.length === 0 && diodos.length === 0) || fios.length === 0) {
+                document.getElementById('painelResultados').innerHTML = `<p class="text-rose-400">⚠️ Conecte os fios entre Fonte e Cargas para simular!</p>`;
+                return;
+            }
+
+            let tensaoTotal = fontes.reduce((acc, f) => acc + f.valor, 0);
+            let resistenciaCarga = resistores.reduce((acc, r) => acc + r.valor, 0);
+            if(resistenciaCarga === 0 && resistores.length === 0) resistenciaCarga = 1;
+
+            let quedaDiodos = diodos.reduce((acc, d) => acc + d.valor, 0);
+
+            let resistenciaFiosTotal = fios.reduce((acc, f) => {
+                let rFio = (f.rho * (f.metros * 2)) / f.bitola;
+                return acc + rFio;
+            }, 0);
+
+            let resistenciaTotal = resistenciaCarga + resistenciaFiosTotal;
+            let tensaoUtil = tensaoTotal - quedaDiodos;
+            let corrente = 0;
+
+            if (tensaoUtil > 0 && resistenciaTotal > 0) {
+                corrente = tensaoUtil / resistenciaTotal; // Lei de Ohm[cite: 1, 2]
+            }
+
+            let html = `
+                <p class="text-amber-400 font-bold border-b border-slate-800 pb-1 mb-1">📊 Relatório Técnico:</p>
+                <div class="flex justify-between"><span>Fontes (${fontes.length}):</span> <span class="text-white">${tensaoTotal} V</span></div>
+                <div class="flex justify-between"><span>Resistência Carga:</span> <span class="text-white">${resistenciaCarga.toFixed(2)} Ω</span></div>
+                <div class="flex justify-between"><span>Resistência Cabos:</span> <span class="text-white">${resistenciaFiosTotal.toFixed(4)} Ω</span></div>
+                <div class="flex justify-between"><span>Queda Semicondutores:</span> <span class="text-sky-400">${quedaDiodos.toFixed(1)} V</span></div>
+                <div class="flex justify-between"><span>Corrente (I):</span> <span class="text-emerald-400 font-bold">${corrente.toFixed(3)} A</span></div>
+                <p class="text-[10px] text-slate-400 mt-2 italic">🎓 Tutor SENAI: Cálculo executado com sucesso considerando cabos reais e junções PN!</p>
+            `;
+            document.getElementById('painelResultados').innerHTML = html;
+        }
+
+        desenharMesa();
+    </script>
+</body>
+</html>
